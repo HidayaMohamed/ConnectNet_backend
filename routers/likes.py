@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session 
 from database import get_db
 from models import Like, User, Post
-from pydantic import BaseModel
+
  
 
 router = APIRouter(prefix="/likes", tags=["Likes"])

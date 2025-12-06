@@ -21,8 +21,8 @@ class User(Base):
     posts = relationship("Post", back_populates="user")
     comments = relationship("Comment", back_populates="user")
     likes = relationship("Like", back_populates="user")
-    followers = relationship("Follow", foreign_keys="Follow.following_user_id", back_populates="following")
-    following = relationship("Follow", foreign_keys="Follow.follower_user_id", back_populates="follower")
+    followers = relationship("Follow", foreign_keys="[Follow.following_id]", back_populates="following")
+    following = relationship("Follow", foreign_keys="[Follow.follower_id]", back_populates="follower")
 
 class Post(Base):
     __tablename__ = "posts"
@@ -65,9 +65,8 @@ class Like(Base):
 
 class Follow(Base):
     __tablename__ = "follows"
+    follower_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
+    following_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
 
-    follower_user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    following_user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-
-    
+    follower = relationship("User", foreign_keys=[follower_id], back_populates="following")
+    following = relationship("User", foreign_keys=[following_id], back_populates="followers")
