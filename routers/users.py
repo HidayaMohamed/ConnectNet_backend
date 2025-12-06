@@ -1,41 +1,55 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from .. import models, database
-from pydantic import BaseModel
 from passlib.context import CryptContext
+from ..database import get_db
+from ..models import User
+from ..schemas.user import UserCreate, UserUpdate
 
-router = APIRouter()
+router = APIRouter(prefix="/users", tags=["Users"])
+
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-class UserCreate(BaseModel):
-    username: str
-    email: str
-    password: str
-    name: str = None
-    bio: str = None
-
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
 @router.post("/")
 def create_user(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(
-        (models.User.username == user.username) | (models.User.email == user.email)
+    existing = db.query(User).filter(
+        (User.username == user.username) | (User.email == user.email)
     ).first()
-    if db_user:
+    if existing:
         raise HTTPException(status_code=400, detail="Username or Email already exists")
-    hashed_password = pwd_context.hash(user.password)
-    new_user = models.User(
+
+    hashed = pwd_context.hash(user.password)
+
+    new_user = User(
         username=user.username,
         email=user.email,
-        password=hashed_password,
+        password=hashed,
         name=user.name,
-        bio=user.bio
+        bio=user.bio,
+        avatar=user.avatar,
     )
+
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
+
     return {"id": new_user.id, "username": new_user.username, "email": new_user.email}
+
+@router.get("/{id}")
+def get_user(id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+    return user
+
+@router.put("/{id}")
+def update_user(id: int, data: UserUpdate, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == id).first()
+    if not user:
+        raise HTTPException(404, "User not found")
+
+    for key, value in data.dict(exclude_unset=True).items():
+        setattr(user, key, value)
+
+    db.commit()
+    db.refresh(user)
+    return user

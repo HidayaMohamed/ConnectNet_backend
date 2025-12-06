@@ -70,5 +70,4 @@ class Follow(Base):
     following_user_id = Column(Integer, ForeignKey("users.id"), primary_key=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
-    follower = relationship("User", foreign_keys=[follower_user_id], back_populates="following")
-    following = relationship("User", foreign_keys=[following_user_id], back_populates="followers")
+    
