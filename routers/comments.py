@@ -1,10 +1,9 @@
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from .. import models, database
 from pydantic import BaseModel
-from ..database import get_db
-from ..models import Comment, User, Post
+from database import get_db
+from models import Comment, User, Post
 
 router = APIRouter(prefix="/comments", tags=["Comments"])
 
