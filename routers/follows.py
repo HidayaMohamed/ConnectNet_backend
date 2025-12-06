@@ -2,50 +2,60 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from .. import models, database
+from ..database import get_db
+from ..models import Follow, User
 from pydantic import BaseModel
 
-router = APIRouter()
+router = APIRouter(prefix="/follows", tags=["Follows"])
 
-class FollowCreate(BaseModel):
-    follower_user_id: int
-    following_user_id: int
 
-def get_db():
-    db = database.SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+@router.post("/{follower_id}/{following_id}")
+def follow_user(follower_id: int, following_id: int, db: Session = Depends(get_db)):
 
-@router.post("/")
-def follow_user(follow: FollowCreate, db: Session = Depends(get_db)):
-    if follow.follower_user_id == follow.following_user_id:
-        raise HTTPException(status_code=400, detail="Cannot follow yourself")
-    
-    existing_follow = db.query(models.Follow).filter(
-        models.Follow.follower_user_id == follow.follower_user_id,
-        models.Follow.following_user_id == follow.following_user_id
+    if follower_id == following_id:
+        raise HTTPException(400, "You cannot follow yourself")
+
+    if not db.query(User).filter(User.id == follower_id).first():
+        raise HTTPException(404, "Follower not found")
+
+    if not db.query(User).filter(User.id == following_id).first():
+        raise HTTPException(404, "User to follow not found")
+
+    existing = db.query(Follow).filter(
+        Follow.follower_user_id == follower_id,
+        Follow.following_user_id == following_id
     ).first()
-    if existing_follow:
-        raise HTTPException(status_code=400, detail="Already following")
-    
-    new_follow = models.Follow(
-        follower_user_id=follow.follower_user_id,
-        following_user_id=follow.following_user_id
+
+    if existing:
+        raise HTTPException(400, "Already following")
+
+    follow = Follow(
+        follower_user_id=follower_id,
+        following_user_id=following_id
     )
-    db.add(new_follow)
+    db.add(follow)
     db.commit()
-    return {"status": "following"}
+    return {"message": "Now following"}
 
-@router.delete("/")
-def unfollow_user(follow: FollowCreate, db: Session = Depends(get_db)):
-    existing_follow = db.query(models.Follow).filter(
-        models.Follow.follower_user_id == follow.follower_user_id,
-        models.Follow.following_user_id == follow.following_user_id
+@router.delete("/{follower_id}/{following_id}")
+def unfollow_user(follower_id: int, following_id: int, db: Session = Depends(get_db)):
+
+    follow = db.query(Follow).filter(
+        Follow.follower_user_id == follower_id,
+        Follow.following_user_id == following_id
     ).first()
-    if not existing_follow:
-        raise HTTPException(status_code=404, detail="Follow not found")
-    
-    db.delete(existing_follow)
+
+    if not follow:
+        raise HTTPException(404, "Follow relationship not found")
+
+    db.delete(follow)
     db.commit()
-    return {"status": "unfollowed"}
+    return {"message": "Unfollowed"}
+
+@router.get("/followers/{user_id}")
+def get_followers(user_id: int, db: Session = Depends(get_db)):
+    return db.query(Follow).filter(Follow.following_user_id == user_id).all()
+
+@router.get("/following/{user_id}")
+def get_following(user_id: int, db: Session = Depends(get_db)):
+    return db.query(Follow).filter(Follow.follower_user_id == user_id).all()

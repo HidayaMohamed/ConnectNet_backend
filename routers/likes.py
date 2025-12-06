@@ -1,51 +1,49 @@
 
 from fastapi import APIRouter, Depends, HTTPException 
 from sqlalchemy.orm import Session 
-from .. import models, database 
+from ..database import get_db
+from ..models import Like, User, Post
 from pydantic import BaseModel
  
 
-router = APIRouter()
+router = APIRouter(prefix="/likes", tags=["Likes"])
 
-class LikeCreate(BaseModel):
-    user_id: int 
-    post_id: int 
 
-def get_db():
-    db = database.SessionLocal() 
-    try: 
-        yield db
-    finally:  
-        db.close() 
+@router.post("/{user_id}/{post_id}")
+def like_post(user_id: int, post_id: int, db: Session = Depends(get_db)):
+    # Check user and post
+    if not db.query(User).filter(User.id == user_id).first():
+        raise HTTPException(404, "User not found")
+    if not db.query(Post).filter(Post.id == post_id).first():
+        raise HTTPException(404, "Post not found")
 
-@router.post("/") 
-def like_post(like: LikeCreate, db: Session = Depends(get_db)):
-    # check if like already exists
-    existing_like = db.query(models.Like).filter(
-        models.Like.user_id == like.user_id,
-        models.Like.post_id == like.post_id
-    ).first()  
-    if existing_like: 
-        raise HTTPException(status_code=400, detail="Already liked")
-     
-    new_like = models.Like(
-        user_id=like.user_id,
-        post_id=like.post_id 
-    ) 
-    db.add(new_like)
-    db.commit() 
-    return {"user_id": like.user_id, "post_id": like.post_id, "status": "liked"}
- 
-@router.delete("/")
-def unlike_post(like: LikeCreate, db: Session = Depends(get_db)):
-    existing_like = db.query(models.Like).filter(
-        models.Like.user_id == like.user_id,
-        models.Like.post_id == like.post_id
-    ).first() 
-    if not existing_like:
-        raise HTTPException(status_code=404, detail="Like not found")
-     
-    db.delete(existing_like)
-    db.commit() 
-    return {"status": "unliked"} 
- 
+    existing_like = db.query(Like).filter(
+        Like.user_id == user_id,
+        Like.post_id == post_id
+    ).first()
+
+    if existing_like:
+        raise HTTPException(400, "Already liked")
+
+    like = Like(user_id=user_id, post_id=post_id)
+    db.add(like)
+    db.commit()
+    return {"message": "Liked"}
+
+@router.delete("/{user_id}/{post_id}")
+def unlike_post(user_id: int, post_id: int, db: Session = Depends(get_db)):
+    like = db.query(Like).filter(
+        Like.user_id == user_id,
+        Like.post_id == post_id
+    ).first()
+
+    if not like:
+        raise HTTPException(404, "Like not found")
+
+    db.delete(like)
+    db.commit()
+    return {"message": "Unliked"}
+
+@router.get("/post/{post_id}")
+def get_likes(post_id: int, db: Session = Depends(get_db)):
+    return db.query(Like).filter(Like.post_id == post_id).count()
