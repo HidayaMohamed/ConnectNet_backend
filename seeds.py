@@ -31,7 +31,7 @@ def seed_data():
 
         posts_data = [
             {"user": "alice", "caption": "Hello, world!", "media_url": None, "media_type": None},
-            {"user": "bob", "caption": "This is my first post!", "media_url": "https://example.com/photo.jpg", "media_type": "image"},
+            {"user": "bob", "caption": "This is my first post!", "media_url": "https://images.unsplash.com/photo-1640655236999-4cd6dfa12d89?q=80&w=1631&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D", "media_type": "image"},
         ]
 
         created_posts = {}
