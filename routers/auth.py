@@ -1,31 +1,26 @@
-# FastAPI tools
+# routers/auth.py
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-
-# Password hashing library
 from passlib.context import CryptContext
 
-# Local imports
 from database import get_db
 from models import User
-from schemas.auth import LoginRequest
+from schemas import LoginRequest # Corrected import from local schemas.py
 
-# Create router object
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# Password hashing configuration
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# **CRITICAL FIX: Use the working pbkdf2_sha256 algorithm**
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
 @router.post("/login")
 def login(credentials: LoginRequest, db: Session = Depends(get_db)):
-    # Get user by username
     user = db.query(User).filter(User.username == credentials.username).first()
 
-    # If no user or wrong password
+    # Verify password using the new scheme
     if not user or not pwd_context.verify(credentials.password, user.password):
         raise HTTPException(status_code=400, detail="Invalid username or password")
 
-    # Return user data
+    # Return user data (you would normally return a JWT here)
     return {
         "id": user.id,
         "username": user.username,

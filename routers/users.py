@@ -1,82 +1,26 @@
-from fastapi import APIRouter, Depends, HTTPException
+# routers/users.py
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
+from passlib.context import CryptContext # For hashing the password
+
 from database import get_db
 from models import User, Post, Follow
-from schemas.auth import UserCreate
-from passlib.context import CryptContext
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from schemas import UserCreate # Corrected import
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-# Fetch all users
-@router.get("/")
-def get_users(db: Session = Depends(get_db)):
-    users = db.query(User).options(
-        joinedload(User.posts),           # load user's posts
-        joinedload(User.followers),       # load followers
-        joinedload(User.following)        # load following
-    ).all()
+# Define hasher here to ensure it's available for creating users
+pwd_context = CryptContext(schemes=["pbkdf2_sha256"], deprecated="auto")
 
-    result = []
-    for user in users:
-        result.append({
-            "id": user.id,
-            "username": user.username,
-            "name": user.name,
-            "bio": user.bio,
-            "avatar": user.avatar,
-            "posts": [
-                {
-                    "id": post.id,
-                    "caption": post.caption,
-                    "media_url": post.media_url,
-                    "media_type": post.media_type,
-                    "created_at": post.created_at
-                } for post in user.posts
-            ],
-            "followers": [f.follower_id for f in user.followers],
-            "following": [f.following_id for f in user.following]
-        })
-    return result
 
-# Fetch a single user by ID
-@router.get("/{user_id}")
-def get_user(user_id: int, db: Session = Depends(get_db)):
-    user = db.query(User).options(
-        joinedload(User.posts),
-        joinedload(User.followers),
-        joinedload(User.following)
-    ).filter(User.id == user_id).first()
-
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
-    return {
-        "id": user.id,
-        "username": user.username,
-        "name": user.name,
-        "bio": user.bio,
-        "avatar": user.avatar,
-        "posts": [
-            {
-                "id": post.id,
-                "caption": post.caption,
-                "media_url": post.media_url,
-                "media_type": post.media_type,
-                "created_at": post.created_at
-            } for post in user.posts
-        ],
-        "followers": [f.follower_id for f in user.followers],
-        "following": [f.following_id for f in user.following]
-    }
-@router.post("/", status_code=201)
+# Endpoint to create a new user (Registration)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
-    # Check if username or email already exists
     if db.query(User).filter(User.username == user_data.username).first() or \
        db.query(User).filter(User.email == user_data.email).first():
         raise HTTPException(status_code=400, detail="Username or email already registered")
 
-    # **CRITICAL: HASH THE PASSWORD**
+    # CRITICAL: HASH THE PASSWORD
     hashed_password = pwd_context.hash(user_data.password)
 
     new_user = User(
@@ -91,4 +35,7 @@ def create_user(user_data: UserCreate, db: Session = Depends(get_db)):
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
-    return new_user
+    
+    return {"id": new_user.id, "username": new_user.username}
+
+# ... (Paste your existing get_users and get_user endpoints below here)

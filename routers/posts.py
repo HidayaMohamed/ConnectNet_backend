@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models import Post, Comment, Like, User
-from schemas.posts import PostCreate
+from schemas import PostCreate
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 
@@ -35,7 +35,7 @@ def get_posts(db: Session = Depends(get_db)):
         joinedload(Post.likes).joinedload(Like.user)         # load like user
     ).all()
 
-    # Convert to JSON-friendly format
+    
     result = []
     for post in posts:
         result.append({
@@ -43,32 +43,29 @@ def get_posts(db: Session = Depends(get_db)):
             "caption": post.caption,
             "media_url": post.media_url,
             "media_type": post.media_type,
-            "created_at": post.created_at,
+            
+            "created_at": post.created_at.isoformat() if post.created_at else None, 
             "user": {
-                "id": post.user.id,
-                "username": post.user.username,
-                "avatar": post.user.avatar
+                
             },
             "comments": [
                 {
                     "id": comment.id,
                     "content": comment.content,
-                    "created_at": comment.created_at,
+                    
+                    "created_at": comment.created_at.isoformat() if comment.created_at else None, 
                     "user": {
-                        "id": comment.user.id,
-                        "username": comment.user.username,
-                        "avatar": comment.user.avatar
+                       
                     }
                 } for comment in post.comments
             ],
             "likes": [
                 {
                     "user": {
-                        "id": like.user.id,
-                        "username": like.user.username,
-                        "avatar": like.user.avatar
+                       
                     }
                 } for like in post.likes
             ]
         })
+    print(f"Number of posts being returned: {len(result)}")
     return result
