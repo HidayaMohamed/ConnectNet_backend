@@ -21,3 +21,6 @@ class PostCreate(BaseModel):
     caption: str
     media_url: str = None
     media_type: str = None
+
+    class Config:
+        orm_mode = True

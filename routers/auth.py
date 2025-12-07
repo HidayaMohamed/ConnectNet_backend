@@ -1,5 +1,4 @@
-# routers/auth.py
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from passlib.context import CryptContext
 
@@ -18,7 +17,7 @@ def login(credentials: LoginRequest, db: Session = Depends(get_db)):
 
     # Verify password 
     if not user or not pwd_context.verify(credentials.password, user.password):
-        raise HTTPException(status_code=400, detail="Invalid username or password")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password")
 
     # Return user data 
     return {
