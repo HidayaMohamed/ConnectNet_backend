@@ -1,6 +1,8 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-
+from models import User, Post
+from sqlalchemy.orm import Session
+from database import get_db
 # Import routers
 from routers import users, auth, posts, comments, likes, follows
 
@@ -32,5 +34,12 @@ app.include_router(follows.router)
 
 # Root endpoint
 @app.get("/")
-def root():
-    return {"message": "ConnectNet API is running"}
+def root(db: Session = Depends(get_db)):
+    users = db.query(User).all()
+    posts = db.query(Post).all()
+    
+    return {
+        
+        "users": [{"id": u.id, "username": u.username} for u in users],
+        "posts": [{"id": p.id, "caption": p.caption} for p in posts]
+    }

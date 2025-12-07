@@ -3,12 +3,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
 # SQLite database URL (local file DB)
-DATABASE_URL = "sqlite:///ConnectNet.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./ConnectNet.db"
 
 # Create database engine
 # check_same_thread=False is required for SQLite when used with FastAPI
 engine = create_engine(
-    DATABASE_URL,
+    SQLALCHEMY_DATABASE_URL,
     connect_args={"check_same_thread": False}
 )
 
