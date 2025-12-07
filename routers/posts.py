@@ -30,9 +30,9 @@ def create_post(post_data: PostCreate, db: Session = Depends(get_db)):
 @router.get("/")
 def get_posts(db: Session = Depends(get_db)):
     posts = db.query(Post).options(
-        joinedload(Post.user),       # load user who created post
-        joinedload(Post.comments).joinedload(Comment.user),  # load comment user
-        joinedload(Post.likes).joinedload(Like.user)         # load like user
+        joinedload(Post.user),     
+        joinedload(Post.comments).joinedload(Comment.user),  
+        joinedload(Post.likes).joinedload(Like.user)         
     ).all()
 
     

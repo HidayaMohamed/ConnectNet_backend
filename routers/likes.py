@@ -8,15 +8,15 @@ router = APIRouter(prefix="/likes", tags=["Likes"])
 
 @router.post("/{user_id}/{post_id}")
 def like_post(user_id: int, post_id: int, db: Session = Depends(get_db)):
-    # Check user exists
+    # Checks if user exists
     if not db.query(User).filter(User.id == user_id).first():
         raise HTTPException(404, "User not found")
 
-    # Check post exists
+    # Checks if post exists
     if not db.query(Post).filter(Post.id == post_id).first():
         raise HTTPException(404, "Post not found")
 
-    # Check if already liked
+    # Checks if user already liked post
     existing_like = db.query(Like).filter(
         Like.user_id == user_id,
         Like.post_id == post_id

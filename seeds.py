@@ -13,8 +13,7 @@ def seed_data():
     db = SessionLocal()
 
     try:
-        # --- Create Users ---
-        # **CRITICAL: HASH THE PASSWORDS HERE**
+        # Create Users
         hashed_password_1 = pwd_context.hash("password123")
         hashed_password_2 = pwd_context.hash("password123")
         hashed_password_3 = pwd_context.hash("password123")
@@ -31,7 +30,7 @@ def seed_data():
         bob_id = user2.id
         charlie_id = user3.id
 
-        # --- Create Posts ---
+        # Create Posts
         post1 = Post(user_id=alice_id, caption="Hello, world!", media_url=None, media_type=None)
         post2 = Post(user_id=bob_id, caption="This is my first post!", media_url="https://example.com/photo.jpg", media_type="image")
         
@@ -41,14 +40,14 @@ def seed_data():
         post1_id = post1.id
         post2_id = post2.id
 
-        # --- Create Comments ---
+        # Create Comments
         comment1 = Comment(user_id=bob_id, post_id=post1_id, content="Nice post!")
         comment2 = Comment(user_id=charlie_id, post_id=post1_id, content="Welcome!")
 
         db.add_all([comment1, comment2])
         db.commit()
 
-        # --- Create Likes ---
+        #  Create Likes 
         like1 = Like(user_id=bob_id, post_id=post1_id)
         like2 = Like(user_id=alice_id, post_id=post2_id)
         

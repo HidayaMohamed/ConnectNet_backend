@@ -1,12 +1,12 @@
 # schemas.py
 from pydantic import BaseModel
 
-# --- AUTH ---
+# AUTH
 class LoginRequest(BaseModel):
     username: str
     password: str
 
-# --- USERS ---
+# USERS 
 class UserCreate(BaseModel):
     username: str
     email: str
@@ -15,7 +15,7 @@ class UserCreate(BaseModel):
     bio: str = None
     avatar: str = None
 
-# --- POSTS ---
+# POSTS 
 class PostCreate(BaseModel):
     user_id: int 
     caption: str

@@ -7,7 +7,7 @@ from models import Comment, User, Post
 
 router = APIRouter(prefix="/comments", tags=["Comments"])
 
-# Schema for creating comments
+# Schema  creating comments
 class CommentCreate(BaseModel):
     user_id: int
     post_id: int
@@ -15,11 +15,11 @@ class CommentCreate(BaseModel):
 
 @router.post("/")
 def add_comment(comment: CommentCreate, db: Session = Depends(get_db)):
-    # Check if user exists
+    # Checks if user exists
     if not db.query(User).filter(User.id == comment.user_id).first():
         raise HTTPException(404, "User not found")
 
-    # Check if post exists
+    # Checks if post exists
     if not db.query(Post).filter(Post.id == comment.post_id).first():
         raise HTTPException(404, "Post not found")
 

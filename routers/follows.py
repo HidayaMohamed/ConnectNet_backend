@@ -12,14 +12,14 @@ def follow_user(follower_id: int, following_id: int, db: Session = Depends(get_d
     if follower_id == following_id:
         raise HTTPException(400, "You cannot follow yourself")
 
-    # Check both users exist
+    # Checks if both users exist
     if not db.query(User).filter(User.id == follower_id).first():
         raise HTTPException(404, "Follower not found")
 
     if not db.query(User).filter(User.id == following_id).first():
         raise HTTPException(404, "User to follow not found")
 
-    # Check if already following
+    # Checks if lready following
     existing = db.query(Follow).filter(
         Follow.follower_id == follower_id,
         Follow.following_id == following_id
