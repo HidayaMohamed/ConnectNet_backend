@@ -105,6 +105,14 @@ See `/docs` for full OpenAPI spec and examples.
 - If Alembic prints only info lines, run `alembic -c alembic.ini current --verbose` or check `migrations/` exists.
 - If endpoints return empty data, ensure `ConnectNet.db` exists and has been seeded or migrations applied.
 
+
+## Support and contact details
+
+GitHub - github.com/HidayaMohamed
+email - hidayamohaed002@gmail.com
+
+
+
 ## License
 The content of this site is licensed under the MIT license Copyright (c) 2025.
 
