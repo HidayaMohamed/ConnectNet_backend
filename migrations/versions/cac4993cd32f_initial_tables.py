@@ -1,8 +1,8 @@
-"""initial tables
+"""initial_tables
 
-Revision ID: 4bf23d3a93f7
+Revision ID: cac4993cd32f
 Revises: 
-Create Date: 2025-12-06 00:31:34.690107
+Create Date: 2025-12-07 13:10:54.855575
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4bf23d3a93f7'
+revision: str = 'cac4993cd32f'
 down_revision: Union[str, None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -35,12 +35,11 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_users_id'), 'users', ['id'], unique=False)
     op.create_table('follows',
-    sa.Column('follower_user_id', sa.Integer(), nullable=False),
-    sa.Column('following_user_id', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('(CURRENT_TIMESTAMP)'), nullable=True),
-    sa.ForeignKeyConstraint(['follower_user_id'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['following_user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('follower_user_id', 'following_user_id')
+    sa.Column('follower_id', sa.Integer(), nullable=False),
+    sa.Column('following_id', sa.Integer(), nullable=False),
+    sa.ForeignKeyConstraint(['follower_id'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['following_id'], ['users.id'], ),
+    sa.PrimaryKeyConstraint('follower_id', 'following_id')
     )
     op.create_table('posts',
     sa.Column('id', sa.Integer(), nullable=False),

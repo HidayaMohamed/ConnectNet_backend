@@ -1,22 +1,27 @@
-
+# Import required SQLAlchemy tools
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# SQLite database
+# SQLite database URL (local file DB)
 DATABASE_URL = "sqlite:///ConnectNet.db"
 
-# For SQLite, check_same_thread is required
+# Create database engine
+# check_same_thread=False is required for SQLite when used with FastAPI
 engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
+    DATABASE_URL,
+    connect_args={"check_same_thread": False}
 )
+
+# Create a session factory (used to talk to the DB)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+# Base class for SQLAlchemy models
 Base = declarative_base()
 
-# Dependency to get DB session
+# Dependency used inside route functions to get a DB session
 def get_db():
-    db = SessionLocal()
+    db = SessionLocal()  # open connection
     try:
-        yield db
+        yield db          # provide it to the route
     finally:
-        db.close()
+        db.close()        # close connection when done
