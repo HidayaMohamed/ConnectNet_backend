@@ -1,21 +1,15 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from models import User, Post
-from sqlalchemy.orm import Session
-from database import get_db
-# Import routers
-from routers import users, auth, posts, comments, likes, follows
+from pydantic import BaseModel
 
-# Create FastAPI application
-app = FastAPI(title="ConnectNet")
+app = FastAPI(title= "ConnectNet")
 
-# Allowed frontend URLs
+# Allow your React frontend to talk to FastAPI
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173",
-]
-
-# Enable CORS for frontend communication
+    "http://127.0.0.1:5173", 
+    
+    ]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -24,22 +18,36 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Register routers
-app.include_router(users.router)
-app.include_router(auth.router)
-app.include_router(posts.router)
-app.include_router(comments.router)
-app.include_router(likes.router)
-app.include_router(follows.router)
+# Model for login
+class LoginData(BaseModel):
+    username: str
+    password: str
 
-# Root endpoint
-@app.get("/")
-def root(db: Session = Depends(get_db)):
-    users = db.query(User).all()
-    posts = db.query(Post).all()
-    
-    return {
-        
-        "users": [{"id": u.id, "username": u.username} for u in users],
-        "posts": [{"id": p.id, "caption": p.caption} for p in posts]
+# Fake "database" for now
+USERS = {
+    "admin": {"id": 1, "username": "admin", "password": "123"}
+}
+
+# Login route
+@app.post("/auth/login")
+async def login(data: LoginData):
+    user = USERS.get(data.username)
+    if user and user["password"] == data.password:
+        return {
+        "id": hash(data.username) % 10000,  # fake unique ID
+        "username": data.username,
+        "token": "fake-jwt-token"
     }
+    raise HTTPException(status_code=401, detail="Invalid credentials")
+
+# Example "posts" route so you can post after logging in
+POSTS = []
+
+@app.post("/posts")
+async def create_post(post: dict):
+    POSTS.append(post)
+    return post
+
+@app.get("/posts")
+async def get_posts():
+    return POSTS

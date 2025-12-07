@@ -2,9 +2,30 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 from database import get_db
 from models import Post, Comment, Like, User
-
+from schemas.posts import PostCreate
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
+
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def create_post(post_data: PostCreate, db: Session = Depends(get_db)):
+    # Check if the user exists
+    if not db.query(User).filter(User.id == post_data.user_id).first():
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Create the new Post object
+    new_post = Post(
+        user_id=post_data.user_id,
+        caption=post_data.caption,
+        media_url=post_data.media_url,
+        media_type=post_data.media_type,
+    )
+
+    db.add(new_post)
+    db.commit()
+    db.refresh(new_post)
+
+    # Return the created post
+    return new_post
 # Fetch all posts with user, comments, and likes
 @router.get("/")
 def get_posts(db: Session = Depends(get_db)):

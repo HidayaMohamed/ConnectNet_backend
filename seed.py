@@ -1,6 +1,7 @@
 from database import SessionLocal, engine, Base
 from models import User, Post, Comment, Like, Follow
-
+from passlib.context import CryptContext
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # Create all tables (if not already created via Alembic)
 Base.metadata.create_all(bind=engine)
 
@@ -9,10 +10,14 @@ def seed_data():
 
     try:
         # --- Create Users ---
-        user1 = User(username="alice", email="alice@example.com", password="password1", name="Alice")
-        user2 = User(username="bob", email="bob@example.com", password="password2", name="Bob")
-        user3 = User(username="charlie", email="charlie@example.com", password="password3", name="Charlie")
+        
+        hashed_password_1 = pwd_context.hash("password1")
+        hashed_password_2 = pwd_context.hash("password2")
+        hashed_password_3 = pwd_context.hash("password3")
 
+        user1 = User(username="alice", email="alice@example.com", password=hashed_password_1, name="Alice")
+        user2 = User(username="bob", email="bob@example.com", password=hashed_password_2, name="Bob")
+        user3 = User(username="charlie", email="charlie@example.com", password=hashed_password_3, name="Charlie")
         db.add_all([user1, user2, user3])
         db.commit()
 
