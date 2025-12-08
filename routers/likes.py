@@ -15,10 +15,10 @@ def like_post(user_id: int, post_id: int, db: Session = Depends(get_db)):
     if not db.query(Post).filter(Post.id == post_id).first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
-    existing_like = db.query(Like).filter(and_(
+    existing_like = db.query(Like).filter(
         Like.user_id == user_id,
         Like.post_id == post_id
-    )).first()
+    ).first()
 
     if existing_like:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Already liked")
@@ -28,17 +28,18 @@ def like_post(user_id: int, post_id: int, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(like)
 
-    return {"id": like.id, "user_id": like.user_id, "post_id": like.post_id, "message": "Liked"}
+    return {"id": like.id, "user_id": like.user_id, "post_id": post_id, "message": "Liked"}
 
-@router.delete("/{user_id}/{post_id}")
+
+@router.delete("/{user_id}/{post_id}", status_code=status.HTTP_200_OK)
 def unlike_post(user_id: int, post_id: int, db: Session = Depends(get_db)):
-    like = db.query(Like).filter(and_(
+    like = db.query(Like).filter(
         Like.user_id == user_id,
         Like.post_id == post_id
-    )).first()
+    ).first()
 
     if not like:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Like not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Like does not exist")
 
     db.delete(like)
     db.commit()

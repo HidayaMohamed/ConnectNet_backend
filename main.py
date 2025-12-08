@@ -14,21 +14,21 @@ from routers.auth import router as auth_router
 
 app = FastAPI(title="ConnectNet API")
 
-# Allow your React frontend to talk to FastAPI
+# Allow React frontend to communicate with FastAPI
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173", 
-    
-    ]
+    "http://127.0.0.1:5173",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+# Include all routers
 app.include_router(users_router)
 app.include_router(posts_router)
 app.include_router(comments_router)
@@ -36,7 +36,7 @@ app.include_router(likes_router)
 app.include_router(follows_router)
 app.include_router(auth_router)
 
-
+# Example root endpoint
 @app.get("/")
 def root(db: Session = Depends(get_db)):
     users = db.query(User).all()
@@ -48,10 +48,11 @@ def root(db: Session = Depends(get_db)):
             "name": u.name,
             "bio": u.bio,
             "avatar": u.avatar,
-            "created_at": u.created_at.isoformat() if getattr(u, "created_at", None) else None,
+            "created_at": u.created_at.isoformat() if u.created_at else None,
         }
         for u in users
     ]
+
     posts = (
         db.query(Post)
         .options(
@@ -64,62 +65,54 @@ def root(db: Session = Depends(get_db)):
 
     posts_data = []
     for p in posts:
-        p_user = getattr(p, "user", None)
         post_user = {
-            "id": getattr(p_user, "id", None),
-            "username": getattr(p_user, "username", None),
-            "name": getattr(p_user, "name", None),
-            "avatar": getattr(p_user, "avatar", None),
-        } if p_user else None
+            "id": p.user.id,
+            "username": p.user.username,
+            "name": p.user.name,
+            "avatar": p.user.avatar,
+        } if p.user else None
 
-        comments = []
-        for c in getattr(p, "comments", []) or []:
-            c_user = getattr(c, "user", None)
-            comments.append(
-                 {
-                    "id": c.id,
-                    "user_id": c.user_id,
-                    "content": c.content,
-                    "created_at": c.created_at.isoformat() if getattr(c, "created_at", None) else None,
-                    "user": {
-                        "id": getattr(c_user, "id", None),
-                        "username": getattr(c_user, "username", None),
-                        "name": getattr(c_user, "name", None),
-                        "avatar": getattr(c_user, "avatar", None),
-                    } if c_user else None,
-                }
-            )
-
-        likes = []
-        for l in getattr(p, "likes", []) or []:
-            l_user = getattr(l, "user", None)
-            likes.append(
-                {
-                    "user_id": l.user_id,
-                    "created_at": l.created_at.isoformat() if getattr(l, "created_at", None) else None,
-                    "user": {
-                        "id": getattr(l_user, "id", None),
-                        "username": getattr(l_user, "username", None),
-                        "name": getattr(l_user, "name", None),
-                        "avatar": getattr(l_user, "avatar", None),
-                    } if l_user else None,
-                }
-            )
-
-        posts_data.append(
+        comments = [
             {
-                "id": p.id,
-                "user_id": p.user_id,
-                "caption": p.caption,
-                "media_url": p.media_url,
-                "media_type": p.media_type,
-                "created_at": p.created_at.isoformat() if getattr(p, "created_at", None) else None,
-                "user": post_user,
-                "comments": comments,
-                "likes": likes,
-                "like_count": len(likes),
+                "id": c.id,
+                "user_id": c.user_id,
+                "content": c.content,
+                "created_at": c.created_at.isoformat() if c.created_at else None,
+                "user": {
+                    "id": c.user.id,
+                    "username": c.user.username,
+                    "name": c.user.name,
+                    "avatar": c.user.avatar,
+                } if c.user else None,
             }
-        )
+            for c in p.comments
+        ]
 
-    return {"users": users_data, 
-            "posts": posts_data}
+        likes = [
+            {
+                "user_id": l.user_id,
+                "created_at": l.created_at.isoformat() if l.created_at else None,
+                "user": {
+                    "id": l.user.id,
+                    "username": l.user.username,
+                    "name": l.user.name,
+                    "avatar": l.user.avatar,
+                } if l.user else None,
+            }
+            for l in p.likes
+        ]
+
+        posts_data.append({
+            "id": p.id,
+            "user_id": p.user_id,
+            "caption": p.caption,
+            "media_url": p.media_url,
+            "media_type": p.media_type,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+            "user": post_user,
+            "comments": comments,
+            "likes": likes,
+            "like_count": len(likes),
+        })
+
+    return {"users": users_data, "posts": posts_data}
